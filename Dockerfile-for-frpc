@@ -1,14 +1,16 @@
-FROM alpine:3.12.0 AS temp
-
-COPY bin/frpc /tmp
-
-RUN chmod -R 777 /tmp/frpc
-
-
 FROM alpine:3.12.0
 
-WORKDIR /app
+ENV WORKDIR=/data/frpc
 
-COPY --from=temp /tmp/frpc /usr/bin
+# timezone
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories && \
+        apk update && \
+        apk add tzdata ca-certificates && \
+        cp -r -f /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+        rm -rf /var/cache/apk/*
+        
+RUN mkdir -p $WORKDIR
+ADD ./ $WORKDIR
+WORKDIR $WORKDIR
 
-ENTRYPOINT ["/usr/bin/frpc"]
+CMD ["./frpc", "-c", "./frpc.ini"]
